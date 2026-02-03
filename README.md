@@ -35,3 +35,17 @@ To make this app live on GitHub Pages, follow these three steps:
 2. Install dependencies: `npm install`.
 3. Create a `.env` file: `VITE_GEMINI_API_KEY=your_key_here`.
 4. Start the dev server: `npm run dev`.
+
+## 📄 Supported Upload Formats
+- The app accepts **.txt, .csv, .pdf, .xls, .xlsx, .png, .jpg** files for analysis.
+- PDFs and Excel files are converted to text on upload. If a PDF is image-based (scanned) or you upload images, the app will attempt OCR using Tesseract.js to extract text. OCR can be slower and may not perfectly recognize low-quality scans.
+- If text extraction fails entirely, the app shows: "Analysis Failed. Upload a supported file..." and suggests exporting to CSV/TXT or providing a searchable PDF.
+
+## 🔬 Testing OCR locally
+- Start dev server: `npm run dev` and open http://localhost:3000/
+- Use `sample-data/sample_financial.txt` to confirm the parsing/analysis pipeline works quickly.
+- To test OCR on scanned PDFs or images, upload a scanned PDF or a `.png/.jpg` image containing clear printed text — OCR will be attempted automatically. Large files or many pages can take longer to process.
+
+
+## ⚠️ Troubleshooting
+- If you see: "Analysis Failed. Ensure you are uploading a text-based financial statement", verify your file contains selectable text (not scanned images) or try exporting as CSV/TXT from your accounting software.

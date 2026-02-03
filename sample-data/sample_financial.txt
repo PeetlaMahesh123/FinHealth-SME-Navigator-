@@ -1,0 +1,6 @@
+Revenue 125000
+COGS 60000
+Operating Expenses 25000
+Interest 2000
+Profit 36000
+Notes: steady growth and minimal debt

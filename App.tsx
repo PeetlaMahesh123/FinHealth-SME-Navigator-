@@ -6,7 +6,9 @@ import {
   Sparkles, CreditCard, Landmark, AppWindow, Trash2
 } from 'lucide-react';
 import { IndustryType, Language, AssessmentResult, IntegrationStatus } from './types';
-import { analyzeFinancialData } from "./analysisService";
+import { analyzeFinancialData, analyzeFinancialFromTable } from "./analysisService";
+import { fileToText } from "./fileToText";
+import * as XLSX from 'xlsx';
 
 import Dashboard from './components/Dashboard';
 
@@ -95,11 +97,46 @@ const App: React.FC = () => {
     }
   };
 
-  const processAudit = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const processAudit = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => performAnalysis((ev.target?.result as string).substring(0, 20000), selectedIndustry);
-    reader.readAsText(file);
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    setIsAnalyzing(true);
+    setError(null);
+
+    try {
+      // For CSV/XLS/XLSX, parse table and run structured analyzer
+      if (ext === 'csv' || ext === 'xls' || ext === 'xlsx') {
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        if (!rows || rows.length === 0) throw new Error('No tabular data found');
+
+        const result = await analyzeFinancialFromTable(rows, selectedIndustry, language);
+        if (result) {
+          setAnalysisResult(result);
+          const updated = [result, ...(savedReports || [])].slice(0, 15);
+          setSavedReports(updated);
+          localStorage.setItem('sme_db', JSON.stringify(updated));
+        }
+        setActiveTab('dashboard');
+        return;
+      }
+
+      // For PDFs, images, or text files use fileToText (with OCR fallback)
+      const text = await fileToText(file);
+      if (!text || text.trim().length === 0) throw new Error('No text extracted from file');
+      await performAnalysis(text.substring(0, 20000), selectedIndustry);
+    } catch (err) {
+      console.error('File processing failed', err);
+      setError('Analysis Failed. Upload a supported file (.txt,.csv,.pdf,.xls,.xlsx,.png,.jpg). Scanned PDFs/images will be OCRed automatically but may be slow or imperfect.');
+    } finally {
+      setIsAnalyzing(false);
+      // allow re-uploading the same file
+      (e.target as HTMLInputElement).value = '';
+    }
   };
 
   const toggleIntegration = (name: string) => {
@@ -190,7 +227,7 @@ const App: React.FC = () => {
                           </select>
                           <label className="flex items-center bg-indigo-600 text-white px-10 py-5 rounded-2xl text-[11px] font-black uppercase tracking-widest cursor-pointer hover:bg-indigo-500 shadow-2xl transition-all">
                             <Upload className="w-5 h-5 mr-3" /> {t.initiateAudit}
-                            <input type="file" className="hidden" onChange={processAudit} />
+                            <input type="file" accept=".txt,.csv,.pdf,.xls,.xlsx" className="hidden" onChange={processAudit} />
                           </label>
                         </div>
                       </div>

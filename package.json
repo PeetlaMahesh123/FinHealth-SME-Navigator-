@@ -14,7 +14,10 @@
     "lucide-react": "^0.463.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "recharts": "^2.13.0"
+    "recharts": "^2.13.0",
+    "pdfjs-dist": "^2.16.105",
+    "xlsx": "^0.18.5",
+    "tesseract.js": "^4.1.1"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
